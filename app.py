@@ -864,6 +864,13 @@ TEMPLATE_WIZARD = r'''
             text-align: center;
         }
 
+        /* Estilo para campo desabilitado */
+        select:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
         @media (max-width: 860px) {
             .hero-grid, .review-layout { grid-template-columns: 1fr; }
             .step-grid {
@@ -950,7 +957,7 @@ TEMPLATE_WIZARD = r'''
     <header class="main-header">
         <div class="header-logos">
             <img src="/static/logo-prefeitura.png" alt="Prefeitura do Rio" class="logo-prefeitura-topo">
-            <img src="/static/logo_fgm.png" alt="Prefeitura do Rio" class="logo-encceja">
+            <img src="/static/logo_fgm.png" alt="Logo FGM" class="logo-encceja">
         </div>
     </header>
 
@@ -1109,11 +1116,8 @@ TEMPLATE_WIZARD = r'''
 
                             <div class="form-group full">
                                 <label for="opcao_id">Turma *</label>
-                                <select id="opcao_id" name="opcao_id">
-                                    <option value="">Selecione uma turma</option>
-                                    {% for option in course_options %}
-                                    <option value="{{ option.id }}" data-local-id="{{ option.local_id }}" {% if form_data.get('opcao_id') == option.id %}selected{% endif %}>{{ option.turma }}</option>
-                                    {% endfor %}
+                                <select id="opcao_id" name="opcao_id" disabled>
+                                    <option value="">Selecione um local primeiro</option>
                                 </select>
                                 <div class="balao-erro" id="opcao_id-error" {% if not errors.get('opcao_id') %}hidden{% endif %}>{{ errors.get('opcao_id', '') }}</div>
                             </div>
@@ -1306,6 +1310,9 @@ TEMPLATE_WIZARD = r'''
                     return String(o.local_id) === String(localId || '');
                 });
 
+                // Habilita o select de turma
+                optionSelect.disabled = false;
+                
                 optionSelect.innerHTML = '';
                 var placeholder = document.createElement('option');
                 placeholder.value = '';
@@ -1363,7 +1370,14 @@ TEMPLATE_WIZARD = r'''
             /* ── eventos dos selects ── */
             localIdInput.addEventListener('change', function () {
                 setError('local_id', '');
-                atualizarTurmasPorLocal(localIdInput.value, '');
+                if (localIdInput.value) {
+                    atualizarTurmasPorLocal(localIdInput.value, '');
+                } else {
+                    // Se não tem local selecionado, desabilita o select de turma
+                    optionSelect.disabled = true;
+                    optionSelect.innerHTML = '<option value="">Selecione um local primeiro</option>';
+                    aplicarOpcao('');
+                }
                 syncReview();
             });
 
@@ -1673,6 +1687,9 @@ TEMPLATE_WIZARD = r'''
             if (initLocalId) {
                 localIdInput.value = initLocalId;
                 atualizarTurmasPorLocal(initLocalId, initOpcaoId);
+            } else {
+                // Se não tem local inicial, mantém o select de turma desabilitado
+                optionSelect.disabled = true;
             }
 
             benefitsSliders.forEach(initBenefitsSlider);
